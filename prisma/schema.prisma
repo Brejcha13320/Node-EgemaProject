@@ -1,0 +1,135 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("MYSQL_URL")
+}
+
+model User {
+  id        String   @id @unique @default(uuid())
+  nombre    String
+  password  String
+  email     String   @unique
+  rol       RolUser  @default(ESTUDIANTE)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  solicitudTrabajoGrado SolicitudTrabajoGrado?
+  director              InformeFinal[]         @relation("director")
+  codirector            InformeFinal[]         @relation("codirector")
+  jurados               Jurado[]
+}
+
+enum RolUser {
+  ESTUDIANTE
+  DOCENTE
+  COMITE
+  JEFE_PRACTICA
+  COORDINADOR_PRACTICA
+  ADMIN
+}
+
+model SolicitudTrabajoGrado {
+  id           String                      @id @unique @default(uuid())
+  estudianteId String                      @unique
+  opcion       OpcionSolicitudTrabajoGrado
+  createdAt    DateTime                    @default(now())
+  updatedAt    DateTime                    @updatedAt
+  propuesta    Propuesta?
+
+  estudiante User @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+}
+
+enum OpcionSolicitudTrabajoGrado {
+  TRABAJO_GRADO
+  INVESTIGACION
+  ESPECIALIZACION
+  PRUEBAS_SABER_PRO
+}
+
+model Propuesta {
+  id                      String                      @id @unique @default(uuid())
+  solicitudTrabajoGradoId String                      @unique
+  titulo                  String                      @db.MediumText()
+  lineaInvestigacion      LineaInvestigacionPropuesta
+  estado                  EstadoPropuesta             @default(PENDIENTE)
+  problema                String                      @db.LongText()
+  justificacion           String                      @db.LongText()
+  objetivo                String                      @db.LongText()
+  alcance                 String                      @db.LongText()
+  comentarios             String                      @default("") @db.VarChar(10000)
+  cartaAceptacionDirector String                      @default("")
+  propuestaTrabajoGrado   String                      @default("")
+  createdAt               DateTime                    @default(now())
+  updatedAt               DateTime                    @updatedAt
+  informeFinal            InformeFinal?
+
+  files                 File[]
+  solicitudTrabajoGrado SolicitudTrabajoGrado @relation(fields: [solicitudTrabajoGradoId], references: [id], onDelete: Cascade)
+}
+
+enum LineaInvestigacionPropuesta {
+  TELEMATICA_REDES
+  INGENIERIA_SOFTWARE
+  OTRA
+}
+
+enum EstadoPropuesta {
+  APROBADO
+  PENDIENTE
+  CAMBIOS
+  NO_APROBADO
+}
+
+model InformeFinal {
+  id              String             @id @unique @default(uuid())
+  propuestaId     String             @unique
+  directorId      String             @unique
+  codirectorId    String?            @unique
+  recomendaciones String             @db.LongText()
+  conclusiones    String             @db.LongText()
+  trabajoFuturo   String             @db.LongText()
+  informeFinal    String             @default("")
+  estado          EstadoInformeFinal @default(PENDIENTE)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+
+  files      File[]
+  jurados    Jurado[]
+  propuesta  Propuesta @relation(fields: [propuestaId], references: [id], onDelete: Cascade)
+  director   User      @relation("director", fields: [directorId], references: [id], onDelete: Cascade)
+  codirector User?     @relation("codirector", fields: [codirectorId], references: [id], onDelete: Cascade)
+}
+
+enum EstadoInformeFinal {
+  APROBADO
+  PENDIENTE
+  NO_APROBADO
+}
+
+model Jurado {
+  id             String @id @unique @default(uuid())
+  informeFinalId String
+  userId         String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  informeFinal InformeFinal @relation(fields: [informeFinalId], references: [id])
+  user         User         @relation(fields: [userId], references: [id])
+}
+
+model File {
+  id             String   @id @unique @default(uuid())
+  propuestaId    String?
+  informeFinalId String?
+  backblazeName  String   @default("")
+  name           String   @default("")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  propuesta    Propuesta?    @relation(fields: [propuestaId], references: [id], onDelete: Cascade)
+  informeFinal InformeFinal? @relation(fields: [informeFinalId], references: [id], onDelete: Cascade)
+}

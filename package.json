@@ -1,0 +1,47 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsnd --respawn --clear src/app.ts",
+    "build": "rimraf ./dist && tsc",
+    "start": "npm run build && npm run prisma:push && node dist/app.js",
+    "prisma:deploy": "npx prisma migrate deploy",
+    "prisma:push": "npx prisma db push --accept-data-loss",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/jsonwebtoken": "^9.0.5",
+    "@types/multer": "^1.4.11",
+    "@types/node": "^20.11.17",
+    "@types/nodemailer": "^6.4.14",
+    "@types/uuid": "^9.0.8",
+    "prisma": "^5.9.1",
+    "rimraf": "^5.0.5",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "@prisma/client": "^5.9.1",
+    "@types/backblaze-b2": "^1.5.6",
+    "@types/mime-types": "^2.1.4",
+    "backblaze-b2": "^1.7.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.2",
+    "env-var": "^7.4.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "mime-types": "^2.1.35",
+    "multer": "^1.4.5-lts.1",
+    "nodemailer": "^6.9.9",
+    "uuid": "^9.0.1"
+  }
+}
