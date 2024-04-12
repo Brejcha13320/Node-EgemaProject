@@ -37,87 +37,78 @@ export class FileService {
     propuestaId,
     informeFinalId,
   }: DataCreateFile) {
-    try {
-      //Creo el nombre del archivo en backblaze
-      const extension = file.originalname.split(".").at(-1);
-      const backblazeName = `${UuidAdapter.v4()}.${extension}`;
+    //Creo el nombre del archivo en backblaze
+    const extension = file.originalname.split(".").at(-1);
+    const backblazeName = `${UuidAdapter.v4()}.${extension}`;
 
-      // Autenticamos
-      const b2 = new B2({
-        applicationKeyId: this.applicationKeyId,
-        applicationKey: this.applicationKey,
-      });
+    // Autenticamos
+    const b2 = new B2({
+      applicationKeyId: this.applicationKeyId,
+      applicationKey: this.applicationKey,
+    });
 
-      // Autorizamos
-      await b2.authorize();
+    // Autorizamos
+    await b2.authorize();
 
-      // Obtenemos la URL de carga para el bucket
-      const uploadUrlInfo = await b2.getUploadUrl({
-        bucketId: this.bucketId,
-      });
+    // Obtenemos la URL de carga para el bucket
+    const uploadUrlInfo = await b2.getUploadUrl({
+      bucketId: this.bucketId,
+    });
 
-      // Obtener el tipo MIME del archivo basado en su extensión
-      const mimeType =
-        mime.lookup(file.originalname) || "application/octet-stream";
+    // Obtener el tipo MIME del archivo basado en su extensión
+    const mimeType =
+      mime.lookup(file.originalname) || "application/octet-stream";
 
-      // Subimos el archivo al bucket utilizando la URL de carga y el token de autorización obtenidos
-      await b2.uploadFile({
-        uploadUrl: uploadUrlInfo.data.uploadUrl,
-        uploadAuthToken: uploadUrlInfo.data.authorizationToken,
-        fileName: backblazeName,
-        data: file.buffer,
-        mime: mimeType,
-      });
+    // Subimos el archivo al bucket utilizando la URL de carga y el token de autorización obtenidos
+    await b2.uploadFile({
+      uploadUrl: uploadUrlInfo.data.uploadUrl,
+      uploadAuthToken: uploadUrlInfo.data.authorizationToken,
+      fileName: backblazeName,
+      data: file.buffer,
+      mime: mimeType,
+    });
 
-      //CrearDTO
-      const [error, createFileDTO] = CreateFileDTO.create({
-        name: file.originalname,
-        backblazeName,
-        propuestaId,
-        informeFinalId,
-      });
+    //CrearDTO
+    const [error, createFileDTO] = CreateFileDTO.create({
+      name: file.originalname,
+      backblazeName,
+      propuestaId,
+      informeFinalId,
+    });
 
-      if (error) {
-        throw CustomError.internalServer(
-          `Error al Crear el DTO para el CreateFile`
-        );
-      }
-
-      //Crear el File
-      return await this.create(createFileDTO!);
-    } catch (error) {
-      console.log("Error getting bucket:", error);
-      throw CustomError.internalServer(`${error}`);
+    if (error) {
+      throw CustomError.internalServer(
+        `Error al Crear el DTO para el CreateFile`
+      );
     }
+
+    //Crear el File
+    return await this.create(createFileDTO!);
   }
 
   public async getFileToBackblaze(id: string) {
-    try {
-      // Autenticamos
-      const b2 = new B2({
-        applicationKeyId: this.applicationKeyId,
-        applicationKey: this.applicationKey,
-      });
+    // Autenticamos
+    const b2 = new B2({
+      applicationKeyId: this.applicationKeyId,
+      applicationKey: this.applicationKey,
+    });
 
-      // Autorizamos
-      await b2.authorize();
+    // Autorizamos
+    await b2.authorize();
 
-      const file = await this.getById(id);
+    const file = await this.getById(id);
 
-      if (!file) {
-        throw CustomError.badRequest("File not exists");
-      }
-
-      const { data: buffer } = await b2.downloadFileByName({
-        bucketName: this.bucketName,
-        fileName: file.backblazeName,
-        responseType: "arraybuffer",
-      });
-
-      return { buffer, name: file.name };
-    } catch (error) {
-      throw CustomError.internalServer(`${error}`);
+    if (!file) {
+      throw CustomError.badRequest("File not exists");
     }
+
+    const { data: buffer } = await b2.downloadFileByName({
+      bucketName: this.bucketName,
+      fileName: file.backblazeName,
+      responseType: "arraybuffer",
+    });
+
+    return { buffer, name: file.name };
   }
 
   public validateExtension(

@@ -12,99 +12,87 @@ export class InformeFinalService {
   ) {}
 
   public async create(data: CreateInformeFinalDTO): Promise<any> {
+    const { userId, informeFinal, ...restData } = data;
+
+    //Busco el id de la propuesta
+    const propuesta = await this.propuestaService.getByUser(userId);
+
+    if (!propuesta || propuesta.length === 0) {
+      throw CustomError.badRequest(
+        `No existe una propuesta de trabajo de grado en el usuario`
+      );
+    }
+
+    //Creo el Informe Final
+    const createInformeFinal = await prisma.informeFinal.create({
+      data: {
+        propuestaId: propuesta[0].id,
+        ...restData,
+      },
+    });
+
     try {
-      const { userId, informeFinal, ...restData } = data;
-
-      //Busco el id de la propuesta
-      const propuesta = await this.propuestaService.getByUser(userId);
-
-      if (!propuesta || propuesta.length === 0) {
-        throw CustomError.badRequest(
-          `No existe una propuesta de trabajo de grado en el usuario`
-        );
-      }
-
-      //Creo el Informe Final
-      const createInformeFinal = await prisma.informeFinal.create({
-        data: {
-          propuestaId: propuesta[0].id,
-          ...restData,
-        },
+      // Subir archivos y crearlos
+      const informeFinalFile = await this.fileService.uploadFileToBackBlaze({
+        file: informeFinal,
+        propuestaId: null,
+        informeFinalId: createInformeFinal.id,
       });
 
-      try {
-        // Subir archivos y crearlos
-        const informeFinalFile = await this.fileService.uploadFileToBackBlaze({
-          file: informeFinal,
-          propuestaId: null,
-          informeFinalId: createInformeFinal.id,
-        });
+      //Actualiza el Informe Final
+      const updateInformeFinal = await this.updateFilesInformeFinal(
+        createInformeFinal.id,
+        informeFinalFile.id ?? ""
+      );
 
-        //Actualiza el Informe Final
-        const updateInformeFinal = await this.updateFilesInformeFinal(
-          createInformeFinal.id,
-          informeFinalFile.id ?? ""
-        );
-
-        return updateInformeFinal;
-      } catch (error) {
-        /**
-         * Si algo sale mal en la subida de archivos a backblaze, base de datos o actualizando
-         * la propuesta con los nuevos files, se borra la propuesta
-         */
-        this.delete(createInformeFinal.id);
-        throw CustomError.internalServer(`${error}`);
-      }
+      return updateInformeFinal;
     } catch (error) {
+      /**
+       * Si algo sale mal en la subida de archivos a backblaze, base de datos o actualizando
+       * la propuesta con los nuevos files, se borra la propuesta
+       */
+      this.delete(createInformeFinal.id);
       throw CustomError.internalServer(`${error}`);
     }
   }
 
   public async delete(id: string) {
-    try {
-      return prisma.informeFinal.delete({
-        where: {
-          id,
-        },
-      });
-    } catch (error) {
-      throw CustomError.internalServer(`${error}`);
-    }
+    return prisma.informeFinal.delete({
+      where: {
+        id,
+      },
+    });
   }
 
   private async updateFilesInformeFinal(
     id: string,
     informeFinal: string
   ): Promise<InformeFinalEntity> {
-    try {
-      const informeFinalUpdate = await prisma.informeFinal.update({
-        where: {
-          id,
-        },
-        data: {
-          informeFinal,
-        },
-        include: {
-          propuesta: {
-            include: {
-              solicitudTrabajoGrado: {
-                include: {
-                  estudiante: true,
-                },
+    const informeFinalUpdate = await prisma.informeFinal.update({
+      where: {
+        id,
+      },
+      data: {
+        informeFinal,
+      },
+      include: {
+        propuesta: {
+          include: {
+            solicitudTrabajoGrado: {
+              include: {
+                estudiante: true,
               },
             },
           },
-          files: true,
         },
-      });
+        files: true,
+      },
+    });
 
-      console.log(informeFinalUpdate);
-      const informeFinalEntity =
-        InformeFinalEntity.fromObject(informeFinalUpdate);
+    console.log(informeFinalUpdate);
+    const informeFinalEntity =
+      InformeFinalEntity.fromObject(informeFinalUpdate);
 
-      return informeFinalEntity;
-    } catch (error) {
-      throw CustomError.internalServer(`${error}`);
-    }
+    return informeFinalEntity;
   }
 }

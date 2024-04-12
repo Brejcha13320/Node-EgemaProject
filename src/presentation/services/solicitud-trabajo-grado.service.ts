@@ -11,50 +11,42 @@ export class SolicitudTrabajoGradoService {
   public async getByUser(
     estudianteId: string
   ): Promise<SolicitudTrabajoGradoEntity[]> {
-    try {
-      const getSTG = await prisma.solicitudTrabajoGrado.findFirst({
-        where: {
-          estudianteId,
-        },
-        include: {
-          estudiante: true,
-        },
-      });
+    const getSTG = await prisma.solicitudTrabajoGrado.findFirst({
+      where: {
+        estudianteId,
+      },
+      include: {
+        estudiante: true,
+      },
+    });
 
-      if (getSTG) {
-        //Crear Entidad
-        const solicitudTrabajoGradoEntity =
-          SolicitudTrabajoGradoEntity.fromObject(getSTG!);
+    if (getSTG) {
+      //Crear Entidad
+      const solicitudTrabajoGradoEntity =
+        SolicitudTrabajoGradoEntity.fromObject(getSTG!);
 
-        return [solicitudTrabajoGradoEntity];
-      } else {
-        return [];
-      }
-    } catch (error) {
-      throw CustomError.internalServer(`${error}`);
+      return [solicitudTrabajoGradoEntity];
+    } else {
+      return [];
     }
   }
 
   public async create(
     data: CreateSolicitudTrabajoGradoDTO
   ): Promise<SolicitudTrabajoGradoEntity> {
-    try {
-      const createSTG = await prisma.solicitudTrabajoGrado.create({
-        data,
-        include: {
-          estudiante: true,
-        },
-      });
+    const createSTG = await prisma.solicitudTrabajoGrado.create({
+      data,
+      include: {
+        estudiante: true,
+      },
+    });
 
-      //Enviar Email
+    //Enviar Email
 
-      //Crear Entidad
-      const solicitudTrabajoGradoEntity =
-        SolicitudTrabajoGradoEntity.fromObject(createSTG);
+    //Crear Entidad
+    const solicitudTrabajoGradoEntity =
+      SolicitudTrabajoGradoEntity.fromObject(createSTG);
 
-      return solicitudTrabajoGradoEntity;
-    } catch (error) {
-      throw CustomError.internalServer(`${error}`);
-    }
+    return solicitudTrabajoGradoEntity;
   }
 }

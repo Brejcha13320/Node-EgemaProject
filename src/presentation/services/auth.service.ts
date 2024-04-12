@@ -18,65 +18,57 @@ export class AuthService {
   public async loginUser(
     loginUserDto: LoginUserDto
   ): Promise<RequestLoginUser> {
-    try {
-      const user = await prisma.user.findUnique({
-        where: { email: loginUserDto.email },
-      });
+    const user = await prisma.user.findUnique({
+      where: { email: loginUserDto.email },
+    });
 
-      if (!user) throw CustomError.badRequest("Invalid credentials");
+    if (!user) throw CustomError.badRequest("Invalid credentials");
 
-      const isMatching = bcryptAdapter.compare(
-        loginUserDto.password,
-        user.password
-      );
+    const isMatching = bcryptAdapter.compare(
+      loginUserDto.password,
+      user.password
+    );
 
-      if (!isMatching) throw CustomError.badRequest("Invalid credentials");
+    if (!isMatching) throw CustomError.badRequest("Invalid credentials");
 
-      const { password, ...userEntity } = UserEntity.fromObject(user);
+    const { password, ...userEntity } = UserEntity.fromObject(user);
 
-      const token = (await JwtAdapter.generateToken(
-        { id: user.id },
-        "6h"
-      )) as string;
+    const token = (await JwtAdapter.generateToken(
+      { id: user.id },
+      "6h"
+    )) as string;
 
-      if (!token) throw CustomError.badRequest("Error while creating JWT");
+    if (!token) throw CustomError.badRequest("Error while creating JWT");
 
-      return { user: userEntity, token };
-    } catch (error) {
-      throw CustomError.internalServer(`${error}`);
-    }
+    return { user: userEntity, token };
   }
 
   public async registerUser(
     registerUserDto: RegisterUserDto
   ): Promise<RequestRegisterUser> {
-    try {
-      const existUser = await prisma.user.findUnique({
-        where: { email: registerUserDto.email },
-      });
+    const existUser = await prisma.user.findUnique({
+      where: { email: registerUserDto.email },
+    });
 
-      if (existUser) throw CustomError.badRequest("Email already exist");
+    if (existUser) throw CustomError.badRequest("Email already exist");
 
-      //Encriptar Password
-      const passwordEncripted = bcryptAdapter.hash(registerUserDto.password);
-      const user: RegisterUser = {
-        ...registerUserDto,
-        password: passwordEncripted,
-      };
+    //Encriptar Password
+    const passwordEncripted = bcryptAdapter.hash(registerUserDto.password);
+    const user: RegisterUser = {
+      ...registerUserDto,
+      password: passwordEncripted,
+    };
 
-      //Crear Usuario
-      const userCreate = await prisma.user.create({ data: user });
+    //Crear Usuario
+    const userCreate = await prisma.user.create({ data: user });
 
-      //Enviar Email
-      await this.sendRegisterEmail(user.email, user.nombre);
+    //Enviar Email
+    await this.sendRegisterEmail(user.email, user.nombre);
 
-      //Crear Entidad
-      const { password, ...userEntity } = UserEntity.fromObject(userCreate);
+    //Crear Entidad
+    const { password, ...userEntity } = UserEntity.fromObject(userCreate);
 
-      return { user: userEntity };
-    } catch (error) {
-      throw CustomError.internalServer(`${error}`);
-    }
+    return { user: userEntity };
   }
 
   private async sendRegisterEmail(email: string, nombre: string) {
