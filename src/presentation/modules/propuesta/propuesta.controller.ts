@@ -3,6 +3,7 @@ import { HandleError, UpdateEstadoPropuestaDTO } from "../../../domain";
 import { PropuestaService } from "../../services/propuesta.service";
 import { CreatePropuestaDTO } from "../../../domain/dtos/propuesta/create-propuesta.dto";
 import { UpdatePropuestaEstudianteDTO } from "../../../domain/dtos/propuesta/update-propuesta-estudiante.dto";
+import { UpdatePropuestaFileEstudianteDTO } from "../../../domain/dtos/propuesta/update-propuesta-file-estudiante.dto";
 
 export class PropuestaController {
   constructor(private propuestaService: PropuestaService) {}
@@ -60,6 +61,20 @@ export class PropuestaController {
 
     this.propuestaService
       .update(id, updatePropuestaEstudianteDTO!)
+      .then((propuesta) => res.status(201).json(propuesta))
+      .catch((error) => HandleError.error(error, res));
+  };
+
+  updatePropuestaFile = (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const [error, updatePropuestaFileEstudianteDTO] =
+      UpdatePropuestaFileEstudianteDTO.create(req.body, req.files);
+
+    if (error) return res.status(400).json({ error });
+
+    this.propuestaService
+      .updatePropuestaFile(id, updatePropuestaFileEstudianteDTO!)
       .then((propuesta) => res.status(201).json(propuesta))
       .catch((error) => HandleError.error(error, res));
   };

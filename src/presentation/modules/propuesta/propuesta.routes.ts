@@ -69,11 +69,15 @@ export class PropuestaRoutes {
       controller.updatePropuesta
     );
 
-    // router.put(
-    //   "/estudiante/files/:id",
-    //   [ValidRolMiddleware.validateRol(["ESTUDIANTE"])],
-    //   controller.getPropuestaById
-    // );
+    router.put(
+      "/estudiante/file/:id",
+      [
+        ValidRolMiddleware.validateRol(["ESTUDIANTE"]),
+        PropuestaMiddleware.validateUpdatePropuestaEstudiante,
+        multerMiddleware.fields([{ name: "file", maxCount: 1 }]),
+      ],
+      controller.updatePropuestaFile
+    );
 
     //* COMITE
 

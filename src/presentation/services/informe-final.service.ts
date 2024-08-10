@@ -33,19 +33,18 @@ export class InformeFinalService {
 
     try {
       // Subir archivos y crearlos
-      const informeFinalFile = await this.fileService.uploadFileToBackBlaze({
-        file: informeFinal,
-        propuestaId: null,
-        informeFinalId: createInformeFinal.id,
-      });
-
-      //Actualiza el Informe Final
-      const updateInformeFinal = await this.updateFilesInformeFinal(
-        createInformeFinal.id,
-        informeFinalFile.id ?? ""
-      );
-
-      return updateInformeFinal;
+      // const informeFinalFile = await this.fileService.uploadFileToBackBlaze({
+      //   file: informeFinal,
+      //   propuestaId: null,
+      //   informeFinalId: createInformeFinal.id,
+      // });
+      // //Actualiza el Informe Final
+      // const updateInformeFinal = await this.updateFilesInformeFinal(
+      //   createInformeFinal.id,
+      //   informeFinalFile.id ?? ""
+      // );
+      // return updateInformeFinal;
+      return {};
     } catch (error) {
       /**
        * Si algo sale mal en la subida de archivos a backblaze, base de datos o actualizando

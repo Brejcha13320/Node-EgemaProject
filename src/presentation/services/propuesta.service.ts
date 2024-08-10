@@ -4,6 +4,7 @@ import { CreatePropuestaDTO } from "../../domain/dtos/propuesta/create-propuesta
 import { FileService } from "./file.service";
 import { SolicitudTrabajoGradoService } from "./solicitud-trabajo-grado.service";
 import { UpdatePropuestaEstudianteDTO } from "../../domain/dtos/propuesta/update-propuesta-estudiante.dto";
+import { UpdatePropuestaFileEstudianteDTO } from "../../domain/dtos/propuesta/update-propuesta-file-estudiante.dto";
 
 export class PropuestaService {
   constructor(
@@ -14,19 +15,37 @@ export class PropuestaService {
   public async getAll(): Promise<Propuesta[]> {
     const propuestas = await prisma.propuesta.findMany({
       include: {
-        files: true,
+        solicitudTrabajoGrado: {
+          include: {
+            estudiante: true,
+          },
+        },
+        files: {
+          include: {
+            file: true,
+          },
+        },
       },
     });
     return propuestas as Propuesta[];
   }
 
-  public async getById(id: string): Promise<Propuesta> {
+  public async getById(id: string) {
     const propuesta = await prisma.propuesta.findFirst({
       where: {
         id,
       },
       include: {
-        files: true,
+        solicitudTrabajoGrado: {
+          include: {
+            estudiante: true,
+          },
+        },
+        files: {
+          include: {
+            file: true,
+          },
+        },
       },
     });
 
@@ -34,10 +53,10 @@ export class PropuestaService {
       throw CustomError.internalServer(`No existe una propuesta con ese id`);
     }
 
-    return propuesta as Propuesta;
+    return propuesta;
   }
 
-  public async getByUser(estudianteId: string): Promise<Propuesta[]> {
+  public async getByUser(estudianteId: string) {
     const getSTG = await prisma.solicitudTrabajoGrado.findFirst({
       where: {
         estudianteId,
@@ -48,9 +67,8 @@ export class PropuestaService {
     });
 
     if (!getSTG) {
-      throw CustomError.internalServer(
-        `No existe una solicitud registrada por el usuario`
-      );
+      //No existe una solicitud registrada por el usuario
+      return [];
     }
 
     const getPropuesta = await prisma.propuesta.findFirst({
@@ -58,12 +76,21 @@ export class PropuestaService {
         solicitudTrabajoGradoId: getSTG.id,
       },
       include: {
-        files: true,
+        solicitudTrabajoGrado: {
+          include: {
+            estudiante: true,
+          },
+        },
+        files: {
+          include: {
+            file: true,
+          },
+        },
       },
     });
 
     if (getPropuesta) {
-      return [getPropuesta as Propuesta];
+      return [getPropuesta];
     } else {
       return [];
     }
@@ -76,7 +103,16 @@ export class PropuestaService {
           estado: "APROBADO",
         },
         include: {
-          files: true,
+          solicitudTrabajoGrado: {
+            include: {
+              estudiante: true,
+            },
+          },
+          files: {
+            include: {
+              file: true,
+            },
+          },
         },
       });
 
@@ -90,11 +126,7 @@ export class PropuestaService {
     }
   }
 
-  /**
-   *
-   * FIXME: Esto se va estallar
-   */
-  public async create(data: CreatePropuestaDTO): Promise<Propuesta> {
+  public async create(data: CreatePropuestaDTO) {
     const {
       userId,
       cartaAceptacionDirector,
@@ -104,6 +136,8 @@ export class PropuestaService {
 
     //Busco el id de la solicitud
     const STG = await this.solicitudTrabajoGradoService.getByUser(userId);
+
+    console.log(STG);
 
     if (!STG || STG.length === 0) {
       throw CustomError.badRequest(
@@ -119,32 +153,32 @@ export class PropuestaService {
       },
     });
 
-    console.log(createPropuesta);
-
     try {
       // Subir archivos y crearlos
       const cartaAceptacionDirectorFile =
-        await this.fileService.uploadFileToBackBlaze({
-          file: cartaAceptacionDirector,
-          propuestaId: createPropuesta.id,
-          informeFinalId: null,
-        });
+        await this.fileService.uploadFileToBackBlaze(cartaAceptacionDirector);
 
       const propuestaTrabajoGradoFile =
-        await this.fileService.uploadFileToBackBlaze({
-          file: propuestaTrabajoGrado,
-          propuestaId: createPropuesta.id,
-          informeFinalId: null,
-        });
+        await this.fileService.uploadFileToBackBlaze(propuestaTrabajoGrado);
 
-      //Actualiza la Propuesta
-      const updatePropuesta = await this.updateFilesPropuesta(
-        createPropuesta.id,
-        cartaAceptacionDirectorFile.id ?? "",
-        propuestaTrabajoGradoFile.id ?? ""
-      );
+      //Creo los Registros en PropuestaFiles
+      await prisma.propuestaFile.createMany({
+        data: [
+          {
+            propuestaId: createPropuesta.id,
+            fileId: cartaAceptacionDirectorFile.id,
+            // tipo: "CARTA_ACEPTACION_DIRECTOR",
+            tipo: "CARTA_ACEPTACION_DIRECTOR",
+          },
+          {
+            propuestaId: createPropuesta.id,
+            fileId: propuestaTrabajoGradoFile.id,
+            tipo: "PROPUESTA_TRABAJO_GRADO",
+          },
+        ],
+      });
 
-      return updatePropuesta;
+      return await this.getById(createPropuesta.id);
     } catch (error) {
       /**
        * Si algo sale mal en la subida de archivos a backblaze, base de datos o actualizando
@@ -155,9 +189,6 @@ export class PropuestaService {
     }
   }
 
-  /**
-   * TODO: revisar si esta retornando el objeto u otro dato y tipar
-   */
   public async delete(id: string) {
     return prisma.propuesta.delete({
       where: {
@@ -176,7 +207,16 @@ export class PropuestaService {
       },
       data,
       include: {
-        files: true,
+        solicitudTrabajoGrado: {
+          include: {
+            estudiante: true,
+          },
+        },
+        files: {
+          include: {
+            file: true,
+          },
+        },
       },
     });
     return propuesta as Propuesta;
@@ -192,34 +232,49 @@ export class PropuestaService {
       },
       data,
       include: {
-        files: true,
+        solicitudTrabajoGrado: {
+          include: {
+            estudiante: true,
+          },
+        },
+        files: {
+          include: {
+            file: true,
+          },
+        },
       },
     });
 
     return propuesta as Propuesta;
   }
 
-  /**
-   * FIXME: esto se va estallar
-   */
-  private async updateFilesPropuesta(
+  public async updatePropuestaFile(
     id: string,
-    cartaAceptacionDirector: string,
-    propuestaTrabajoGrado: string
-  ): Promise<Propuesta> {
-    const propuesta = await prisma.propuesta.update({
+    data: UpdatePropuestaFileEstudianteDTO
+  ): Promise<Propuesta | any> {
+    //Obtener el propuestaFile
+    const propuestFile = await prisma.propuestaFile.findFirst({
       where: {
-        id,
-      },
-      data: {
-        // cartaAceptacionDirector,
-        // propuestaTrabajoGrado,
-      },
-      include: {
-        files: true,
+        id: data.propuestaFileId,
       },
     });
 
-    return propuesta as Propuesta;
+    if (!propuestFile) {
+      throw CustomError.badRequest(
+        `No existe un archivo en la propuesta con el id ${data.propuestaFileId}`
+      );
+    }
+
+    try {
+      // Subir archivos y crearlos
+      await this.fileService.updateFileToBackBlaze(
+        propuestFile.fileId,
+        data.file
+      );
+
+      return await this.getById(id);
+    } catch (error) {
+      throw CustomError.internalServer(`${error}`);
+    }
   }
 }

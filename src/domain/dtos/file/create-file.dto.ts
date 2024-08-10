@@ -1,26 +1,16 @@
 export class CreateFileDTO {
   private constructor(
     public readonly name: string,
-    public readonly backblazeName: string,
-    public readonly propuestaId: string | null,
-    public readonly informeFinalId: string | null
+    public readonly backblazeName: string
   ) {}
 
   static create(object: { [key: string]: any }): [string?, CreateFileDTO?] {
-    const {
-      name,
-      backblazeName,
-      propuestaId = null,
-      informeFinalId = null,
-    } = object;
+    const { name, backblazeName } = object;
 
     if (!name) return ["Missing name"];
     if (!backblazeName) return ["Missing backBlazeName"];
 
     //Crear DTO
-    return [
-      undefined,
-      new CreateFileDTO(name, backblazeName, propuestaId, informeFinalId),
-    ];
+    return [undefined, new CreateFileDTO(name, backblazeName)];
   }
 }

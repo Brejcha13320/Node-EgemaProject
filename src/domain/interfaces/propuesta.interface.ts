@@ -1,10 +1,12 @@
 import { File } from "./file.interface";
-import { InformeFinal } from "./informe-final.interface";
 import { SolicitudTrabajoGrado } from "./solicitud-trabajo-grado.interface";
 
 export interface FilesObjectPropuesta {
   cartaAceptacionDirector: [Express.Multer.File];
   propuestaTrabajoGrado: [Express.Multer.File];
+}
+export interface FileObjectPropuesta {
+  file: [Express.Multer.File];
 }
 
 export interface Propuesta {
@@ -21,6 +23,7 @@ export interface Propuesta {
   createdAt: Date;
   updatedAt: Date;
   files: PropuestaFile[];
+  solicitudTrabajoGrado: SolicitudTrabajoGrado;
 }
 
 export interface PropuestaFile {
