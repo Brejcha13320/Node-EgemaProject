@@ -8,13 +8,6 @@ export * from "./dtos/file/create-file.dto";
 export * from "./dtos/file/get-file.dto";
 export * from "./dtos/informe-final/create-informe-final.dto";
 
-//* ENTITIES /
-export * from "./entities/user.entity";
-export * from "./entities/solicitud-trabajo-grado.entity";
-export * from "./entities/propuesta.entity";
-export * from "./entities/file.entity";
-export * from "./entities/informe-final.entity";
-
 //* ERRORS /
 export * from "./errors/custom-errors";
 export * from "./errors/handle-error";

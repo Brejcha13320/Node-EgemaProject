@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { JwtAdapter } from "../../config";
 import { prisma } from "../../database";
-import { UserEntity } from "../../domain";
+import { User } from "../../domain";
 
 export class AuthMiddleware {
   static async validateToken(req: Request, res: Response, next: NextFunction) {
@@ -36,10 +36,10 @@ export class AuthMiddleware {
           error: "Invalid token - user not found",
         });
 
-      req.body.user = UserEntity.fromObject(user);
+      const { password, ...bodyUser } = user as User;
+      req.body.user = bodyUser;
       next();
     } catch (error) {
-      console.log(error);
       res
         .status(500)
         .json({ authorization: false, error: "Internal Server Error" });

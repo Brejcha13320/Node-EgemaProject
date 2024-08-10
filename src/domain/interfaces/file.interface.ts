@@ -1,13 +1,14 @@
-import { Propuesta } from "./propuesta.interface";
-
 export interface File {
   id: string;
-  propuestaId: string | null;
-  dropboxId: string;
   name: string;
+  backblazeName: string;
   createdAt: Date;
   updatedAt: Date;
 }
+
+/**
+ * FIXME: Esto se va quitar!!!
+ */
 
 export interface DataCreateFile {
   file: Express.Multer.File;

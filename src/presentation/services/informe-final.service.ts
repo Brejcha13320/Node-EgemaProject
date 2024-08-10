@@ -1,4 +1,4 @@
-import { CustomError, InformeFinalEntity } from "../../domain";
+import { CustomError, InformeFinal } from "../../domain";
 import { CreateInformeFinalDTO } from "../../domain/dtos/informe-final/create-informe-final.dto";
 import { FileService } from "./file.service";
 import { SolicitudTrabajoGradoService } from "./solicitud-trabajo-grado.service";
@@ -67,7 +67,7 @@ export class InformeFinalService {
   private async updateFilesInformeFinal(
     id: string,
     informeFinal: string
-  ): Promise<InformeFinalEntity> {
+  ): Promise<InformeFinal> {
     const informeFinalUpdate = await prisma.informeFinal.update({
       where: {
         id,
@@ -76,23 +76,12 @@ export class InformeFinalService {
         informeFinal,
       },
       include: {
-        propuesta: {
-          include: {
-            solicitudTrabajoGrado: {
-              include: {
-                estudiante: true,
-              },
-            },
-          },
-        },
         files: true,
       },
     });
 
     console.log(informeFinalUpdate);
-    const informeFinalEntity =
-      InformeFinalEntity.fromObject(informeFinalUpdate);
 
-    return informeFinalEntity;
+    return informeFinalUpdate as any;
   }
 }

@@ -1,8 +1,7 @@
 import { prisma } from "../../database";
 import {
-  CustomError,
   CreateSolicitudTrabajoGradoDTO,
-  SolicitudTrabajoGradoEntity,
+  SolicitudTrabajoGrado,
 } from "../../domain";
 
 export class SolicitudTrabajoGradoService {
@@ -10,7 +9,7 @@ export class SolicitudTrabajoGradoService {
 
   public async getByUser(
     estudianteId: string
-  ): Promise<SolicitudTrabajoGradoEntity[]> {
+  ): Promise<SolicitudTrabajoGrado[]> {
     const getSTG = await prisma.solicitudTrabajoGrado.findFirst({
       where: {
         estudianteId,
@@ -21,11 +20,8 @@ export class SolicitudTrabajoGradoService {
     });
 
     if (getSTG) {
-      //Crear Entidad
-      const solicitudTrabajoGradoEntity =
-        SolicitudTrabajoGradoEntity.fromObject(getSTG!);
-
-      return [solicitudTrabajoGradoEntity];
+      const STG = getSTG as SolicitudTrabajoGrado;
+      return [STG];
     } else {
       return [];
     }
@@ -33,7 +29,7 @@ export class SolicitudTrabajoGradoService {
 
   public async create(
     data: CreateSolicitudTrabajoGradoDTO
-  ): Promise<SolicitudTrabajoGradoEntity> {
+  ): Promise<SolicitudTrabajoGrado> {
     const createSTG = await prisma.solicitudTrabajoGrado.create({
       data,
       include: {
@@ -41,12 +37,10 @@ export class SolicitudTrabajoGradoService {
       },
     });
 
-    //Enviar Email
+    /**
+     * TODO: Enviar Email
+     */
 
-    //Crear Entidad
-    const solicitudTrabajoGradoEntity =
-      SolicitudTrabajoGradoEntity.fromObject(createSTG);
-
-    return solicitudTrabajoGradoEntity;
+    return createSTG as SolicitudTrabajoGrado;
   }
 }

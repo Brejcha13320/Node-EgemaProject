@@ -4,7 +4,7 @@ import {
   RegisterUser,
   RequestLoginUser,
   RequestRegisterUser,
-  UserEntity,
+  User,
   registerEmailTemplate,
 } from "../../domain";
 import { LoginUserDto } from "../../domain/dtos/auth/login-user.dto";
@@ -31,7 +31,7 @@ export class AuthService {
 
     if (!isMatching) throw CustomError.badRequest("Invalid credentials");
 
-    const { password, ...userEntity } = UserEntity.fromObject(user);
+    const { password, ...userEntity } = user as User;
 
     const token = (await JwtAdapter.generateToken(
       { id: user.id },
@@ -66,7 +66,7 @@ export class AuthService {
     await this.sendRegisterEmail(user.email, user.nombre);
 
     //Crear Entidad
-    const { password, ...userEntity } = UserEntity.fromObject(userCreate);
+    const { password, ...userEntity } = userCreate as User;
 
     return { user: userEntity };
   }

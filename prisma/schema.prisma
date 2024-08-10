@@ -7,6 +7,8 @@ datasource db {
   url      = env("MYSQL_URL")
 }
 
+// USER
+
 model User {
   id        String   @id @unique @default(uuid())
   nombre    String
@@ -19,7 +21,10 @@ model User {
   solicitudTrabajoGrado SolicitudTrabajoGrado?
   director              InformeFinal[]         @relation("director")
   codirector            InformeFinal[]         @relation("codirector")
-  jurados               Jurado[]
+  jurados               Jurado[]               @relation("jurado")
+  reunionParticipantes  ReunionParticipante[]
+  practicaProfesional   PracticaProfesional?   @relation("estudiante")
+  coordinadorPractica   PracticaProfesional[]  @relation("coordinador")
 }
 
 enum RolUser {
@@ -31,6 +36,8 @@ enum RolUser {
   ADMIN
 }
 
+// SolicitudTrabajoGrado
+
 model SolicitudTrabajoGrado {
   id           String                      @id @unique @default(uuid())
   estudianteId String                      @unique
@@ -38,8 +45,7 @@ model SolicitudTrabajoGrado {
   createdAt    DateTime                    @default(now())
   updatedAt    DateTime                    @updatedAt
   propuesta    Propuesta?
-
-  estudiante User @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
+  estudiante   User                        @relation(fields: [estudianteId], references: [id], onDelete: Cascade)
 }
 
 enum OpcionSolicitudTrabajoGrado {
@@ -48,6 +54,8 @@ enum OpcionSolicitudTrabajoGrado {
   ESPECIALIZACION
   PRUEBAS_SABER_PRO
 }
+
+//Propuesta
 
 model Propuesta {
   id                      String                      @id @unique @default(uuid())
@@ -60,13 +68,11 @@ model Propuesta {
   objetivo                String                      @db.LongText()
   alcance                 String                      @db.LongText()
   comentarios             String                      @default("") @db.VarChar(10000)
-  cartaAceptacionDirector String                      @default("")
-  propuestaTrabajoGrado   String                      @default("")
   createdAt               DateTime                    @default(now())
   updatedAt               DateTime                    @updatedAt
   informeFinal            InformeFinal?
 
-  files                 File[]
+  files                 PropuestaFile[]
   solicitudTrabajoGrado SolicitudTrabajoGrado @relation(fields: [solicitudTrabajoGradoId], references: [id], onDelete: Cascade)
 }
 
@@ -83,30 +89,60 @@ enum EstadoPropuesta {
   NO_APROBADO
 }
 
-model InformeFinal {
-  id              String             @id @unique @default(uuid())
-  propuestaId     String             @unique
-  directorId      String             @unique
-  codirectorId    String?            @unique
-  recomendaciones String             @db.LongText()
-  conclusiones    String             @db.LongText()
-  trabajoFuturo   String             @db.LongText()
-  informeFinal    String             @default("")
-  estado          EstadoInformeFinal @default(PENDIENTE)
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+model PropuestaFile {
+  id          String            @id @unique @default(uuid())
+  fileId      String            @unique
+  propuestaId String
+  tipo        TipoPropuestaFile
+  propuesta   Propuesta         @relation(fields: [propuestaId], references: [id], onDelete: Cascade)
+  file        File              @relation(fields: [fileId], references: [id], onDelete: Cascade)
+}
 
-  files      File[]
+enum TipoPropuestaFile {
+  CARTA_ACEPTACION_DIRECTOR
+  PROPUESTA_TRABAJO_GRADO
+}
+
+//InformeFinal
+
+model InformeFinal {
+  id              String  @id @unique @default(uuid())
+  propuestaId     String  @unique
+  directorId      String  @unique
+  codirectorId    String? @unique
+  recomendaciones String  @db.LongText()
+  conclusiones    String  @db.LongText()
+  trabajoFuturo   String  @db.LongText()
+
+  estado    EstadoInformeFinal @default(PENDIENTE)
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  files     InformeFinalFile[]
+  propuesta Propuesta          @relation(fields: [propuestaId], references: [id], onDelete: Cascade)
+
   jurados    Jurado[]
-  propuesta  Propuesta @relation(fields: [propuestaId], references: [id], onDelete: Cascade)
-  director   User      @relation("director", fields: [directorId], references: [id], onDelete: Cascade)
-  codirector User?     @relation("codirector", fields: [codirectorId], references: [id], onDelete: Cascade)
+  director   User     @relation("director", fields: [directorId], references: [id], onDelete: Cascade)
+  codirector User?    @relation("codirector", fields: [codirectorId], references: [id], onDelete: Cascade)
 }
 
 enum EstadoInformeFinal {
   APROBADO
   PENDIENTE
   NO_APROBADO
+}
+
+model InformeFinalFile {
+  id             String            @id @unique @default(uuid())
+  fileId         String            @unique
+  informeFinalId String
+  tipo           TipoPropuestaFile
+  informeFinal   InformeFinal      @relation(fields: [informeFinalId], references: [id], onDelete: Cascade)
+  file           File              @relation(fields: [fileId], references: [id], onDelete: Cascade)
+}
+
+enum TipoInformeFinalFile {
+  INFORME_FINAL
 }
 
 model Jurado {
@@ -118,18 +154,123 @@ model Jurado {
   updatedAt DateTime @updatedAt
 
   informeFinal InformeFinal @relation(fields: [informeFinalId], references: [id])
-  user         User         @relation(fields: [userId], references: [id])
+  user         User         @relation("jurado", fields: [userId], references: [id])
 }
 
-model File {
-  id             String   @id @unique @default(uuid())
-  propuestaId    String?
-  informeFinalId String?
-  backblazeName  String   @default("")
-  name           String   @default("")
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+//Reunion
 
-  propuesta    Propuesta?    @relation(fields: [propuestaId], references: [id], onDelete: Cascade)
-  informeFinal InformeFinal? @relation(fields: [informeFinalId], references: [id], onDelete: Cascade)
+model Reunion {
+  id        String   @id @unique @default(uuid())
+  asunto    String   @db.LongText()
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participantes ReunionParticipante[]
+  files         ReunionFile[]
+}
+
+model ReunionFile {
+  id        String          @id @unique @default(uuid())
+  fileId    String          @unique
+  reunionId String
+  tipo      TipoReunionFile
+  reunion   Reunion         @relation(fields: [reunionId], references: [id], onDelete: Cascade)
+  file      File            @relation(fields: [fileId], references: [id], onDelete: Cascade)
+}
+
+enum TipoReunionFile {
+  ACTA_REUNION
+}
+
+model ReunionParticipante {
+  id        String   @id @unique @default(uuid())
+  userId    String
+  reunionId String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reunion Reunion @relation(fields: [reunionId], references: [id])
+  user    User    @relation(fields: [userId], references: [id])
+}
+
+//Sustentación
+model Sustentacion {
+  id                 String   @id @unique @default(uuid())
+  fecha_sustentacion DateTime
+  lugar              String
+  resultado          String
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  files SustentacionFile[]
+}
+
+model SustentacionFile {
+  id             String               @id @unique @default(uuid())
+  fileId         String               @unique
+  sustentacionId String
+  tipo           TipoSustentacionFile
+  sustentacion   Sustentacion         @relation(fields: [sustentacionId], references: [id], onDelete: Cascade)
+  file           File                 @relation(fields: [fileId], references: [id], onDelete: Cascade)
+}
+
+enum TipoSustentacionFile {
+  ACTA_SUSTENTACION
+}
+
+//Practica Profesional
+model PracticaProfesional {
+  id            String                    @id @unique @default(uuid())
+  userId        String                    @unique
+  coordinadorId String
+  createdAt     DateTime                  @default(now())
+  updatedAt     DateTime                  @updatedAt
+  estado        EstadoPracticaProfesional
+  comentarios   String                    @db.LongText()
+  files         PracticaProfesionalFile[]
+  estudiante    User                      @relation("estudiante", fields: [userId], references: [id])
+  coordinador   User                      @relation("coordinador", fields: [coordinadorId], references: [id])
+}
+
+enum EstadoPracticaProfesional {
+  APROBADO
+  PENDIENTE
+  CAMBIOS
+  NO_APROBADO
+}
+
+model PracticaProfesionalFile {
+  id                    String                      @id @unique @default(uuid())
+  fileId                String                      @unique
+  practicaProfesionalId String
+  tipo                  TipoPracticaProfesionalFile
+  practicaProfesional   PracticaProfesional         @relation(fields: [practicaProfesionalId], references: [id], onDelete: Cascade)
+  file                  File                        @relation(fields: [fileId], references: [id], onDelete: Cascade)
+}
+
+enum TipoPracticaProfesionalFile {
+  CONVENIO_ESTUDIANTE
+  FORMATO_INICIAL_PRACTICA
+  INFORME_ACTIVIDA_PRACTICA2
+  INFORME_ACTIVIDA_PRACTICA3
+  AUTOEVALUACION_PRACTICANTE
+  EVALUACION_EMPRESA
+  INFORME_FINAL_PRACTICA
+  OTRO
+}
+
+//File
+
+model File {
+  id            String   @id @unique @default(uuid())
+  name          String   @default("")
+  backblazeName String   @default("")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  propuestaFile           PropuestaFile?
+  informeFinalFile        InformeFinalFile?
+  reunionFile             ReunionFile?
+  sustentacionFile        SustentacionFile?
+  practicaProfesionalFile PracticaProfesionalFile?
 }

@@ -1,7 +1,6 @@
 import { prisma } from "../../database";
-import { CustomError, EstadoPropuesta } from "../../domain";
+import { CustomError, EstadoPropuesta, Propuesta } from "../../domain";
 import { CreatePropuestaDTO } from "../../domain/dtos/propuesta/create-propuesta.dto";
-import { PropuestaEntity } from "../../domain/entities/propuesta.entity";
 import { FileService } from "./file.service";
 import { SolicitudTrabajoGradoService } from "./solicitud-trabajo-grado.service";
 import { UpdatePropuestaEstudianteDTO } from "../../domain/dtos/propuesta/update-propuesta-estudiante.dto";
@@ -12,38 +11,21 @@ export class PropuestaService {
     private solicitudTrabajoGradoService: SolicitudTrabajoGradoService
   ) {}
 
-  public async getAll(): Promise<PropuestaEntity[]> {
+  public async getAll(): Promise<Propuesta[]> {
     const propuestas = await prisma.propuesta.findMany({
       include: {
-        solicitudTrabajoGrado: {
-          include: {
-            estudiante: true,
-          },
-        },
         files: true,
       },
     });
-
-    const propuestasEntity: PropuestaEntity[] = [];
-
-    for (let propuesta of propuestas) {
-      propuestasEntity.push(PropuestaEntity.fromObject(propuesta));
-    }
-
-    return propuestasEntity;
+    return propuestas as Propuesta[];
   }
 
-  public async getById(id: string): Promise<PropuestaEntity> {
+  public async getById(id: string): Promise<Propuesta> {
     const propuesta = await prisma.propuesta.findFirst({
       where: {
         id,
       },
       include: {
-        solicitudTrabajoGrado: {
-          include: {
-            estudiante: true,
-          },
-        },
         files: true,
       },
     });
@@ -52,12 +34,10 @@ export class PropuestaService {
       throw CustomError.internalServer(`No existe una propuesta con ese id`);
     }
 
-    const propuestaEntity = PropuestaEntity.fromObject(propuesta);
-
-    return propuestaEntity;
+    return propuesta as Propuesta;
   }
 
-  public async getByUser(estudianteId: string): Promise<PropuestaEntity[]> {
+  public async getByUser(estudianteId: string): Promise<Propuesta[]> {
     const getSTG = await prisma.solicitudTrabajoGrado.findFirst({
       where: {
         estudianteId,
@@ -78,48 +58,30 @@ export class PropuestaService {
         solicitudTrabajoGradoId: getSTG.id,
       },
       include: {
-        solicitudTrabajoGrado: {
-          include: {
-            estudiante: true,
-          },
-        },
         files: true,
       },
     });
 
     if (getPropuesta) {
-      //Crear Entidad
-      const propuestaEntity = PropuestaEntity.fromObject(getPropuesta!);
-
-      return [propuestaEntity];
+      return [getPropuesta as Propuesta];
     } else {
       return [];
     }
   }
 
-  public async getByUserAprobada(
-    estudianteId: string
-  ): Promise<PropuestaEntity[]> {
+  public async getByUserAprobada(estudianteId: string): Promise<Propuesta[]> {
     try {
       const getPropuesta = await prisma.propuesta.findFirst({
         where: {
           estado: "APROBADO",
         },
         include: {
-          solicitudTrabajoGrado: {
-            include: {
-              estudiante: true,
-            },
-          },
           files: true,
         },
       });
 
       if (getPropuesta) {
-        //Crear Entidad
-        const propuestaEntity = PropuestaEntity.fromObject(getPropuesta!);
-
-        return [propuestaEntity];
+        return [getPropuesta as Propuesta];
       } else {
         return [];
       }
@@ -128,7 +90,11 @@ export class PropuestaService {
     }
   }
 
-  public async create(data: CreatePropuestaDTO): Promise<PropuestaEntity> {
+  /**
+   *
+   * FIXME: Esto se va estallar
+   */
+  public async create(data: CreatePropuestaDTO): Promise<Propuesta> {
     const {
       userId,
       cartaAceptacionDirector,
@@ -189,6 +155,9 @@ export class PropuestaService {
     }
   }
 
+  /**
+   * TODO: revisar si esta retornando el objeto u otro dato y tipar
+   */
   public async delete(id: string) {
     return prisma.propuesta.delete({
       where: {
@@ -200,73 +169,57 @@ export class PropuestaService {
   public async updateEstado(
     id: string,
     data: { estado: EstadoPropuesta }
-  ): Promise<PropuestaEntity> {
-    const propuestaUpdate = await prisma.propuesta.update({
+  ): Promise<Propuesta> {
+    const propuesta = await prisma.propuesta.update({
       where: {
         id,
       },
       data,
       include: {
-        solicitudTrabajoGrado: {
-          include: {
-            estudiante: true,
-          },
-        },
         files: true,
       },
     });
-
-    const propuestaEntity = PropuestaEntity.fromObject(propuestaUpdate);
-    return propuestaEntity;
+    return propuesta as Propuesta;
   }
 
   public async update(
     id: string,
     data: UpdatePropuestaEstudianteDTO
-  ): Promise<PropuestaEntity> {
-    const propuestaUpdate = await prisma.propuesta.update({
+  ): Promise<Propuesta> {
+    const propuesta = await prisma.propuesta.update({
       where: {
         id,
       },
       data,
       include: {
-        solicitudTrabajoGrado: {
-          include: {
-            estudiante: true,
-          },
-        },
         files: true,
       },
     });
 
-    const propuestaEntity = PropuestaEntity.fromObject(propuestaUpdate);
-    return propuestaEntity;
+    return propuesta as Propuesta;
   }
 
+  /**
+   * FIXME: esto se va estallar
+   */
   private async updateFilesPropuesta(
     id: string,
     cartaAceptacionDirector: string,
     propuestaTrabajoGrado: string
-  ): Promise<PropuestaEntity> {
-    const propuestaUpdate = await prisma.propuesta.update({
+  ): Promise<Propuesta> {
+    const propuesta = await prisma.propuesta.update({
       where: {
         id,
       },
       data: {
-        cartaAceptacionDirector,
-        propuestaTrabajoGrado,
+        // cartaAceptacionDirector,
+        // propuestaTrabajoGrado,
       },
       include: {
-        solicitudTrabajoGrado: {
-          include: {
-            estudiante: true,
-          },
-        },
         files: true,
       },
     });
 
-    const propuestaEntity = PropuestaEntity.fromObject(propuestaUpdate);
-    return propuestaEntity;
+    return propuesta as Propuesta;
   }
 }
