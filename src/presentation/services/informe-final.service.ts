@@ -73,7 +73,7 @@ export class InformeFinalService {
         id,
       },
       data: {
-        informeFinal,
+        // informeFinal,
       },
       include: {
         files: true,
