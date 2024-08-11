@@ -6,7 +6,6 @@ export class CreateInformeFinalDTO {
     public readonly userId: string,
     public readonly directorId: string,
     public readonly codirectorId: string | null,
-    public readonly recomendaciones: string,
     public readonly conclusiones: string,
     public readonly trabajoFuturo: string,
     public readonly informeFinal: Express.Multer.File
@@ -17,25 +16,15 @@ export class CreateInformeFinalDTO {
     files: any
   ): [string?, CreateInformeFinalDTO?] {
     //Validaciones de Todos los campos que no son Files
-    const {
-      userId,
-      directorId,
-      codirectorId = null,
-      recomendaciones,
-      conclusiones,
-      trabajoFuturo,
-    } = object;
+    const { userId, directorId, codirectorId, conclusiones, trabajoFuturo } =
+      object;
 
     let informeFinal: [Express.Multer.File];
 
     if (!userId) return ["Missing userId"];
     if (!directorId) return ["Missing directorId"];
-    if (!recomendaciones) return ["Missing recomendaciones"];
     if (!conclusiones) return ["Missing conclusiones"];
     if (!trabajoFuturo) return ["Missing trabajoFuturo"];
-
-    if (recomendaciones && recomendaciones.length > 10000)
-      return ["recomendaciones is too large, max length is 10000 characters"];
 
     if (conclusiones && conclusiones.length > 10000)
       return ["conclusiones is too large, max length is 10000 characters"];
@@ -73,8 +62,7 @@ export class CreateInformeFinalDTO {
       new CreateInformeFinalDTO(
         userId,
         directorId,
-        codirectorId,
-        recomendaciones,
+        codirectorId ?? null,
         conclusiones,
         trabajoFuturo,
         informeFinal[0]

@@ -1,13 +1,16 @@
+import { User } from "./user.interface";
+
 export interface InformeFinal {
   id: string;
   propuestaId: string;
   directorId: string;
   codirectorId: string;
-  recomendaciones: string;
   conclusiones: string;
   trabajoFuturo: string;
   estado: EstadoInformeFinal;
   files: InformeFinalFile[];
+  director: User;
+  codirector: User;
   createdAt: Date;
   updatedAt: Date;
 }

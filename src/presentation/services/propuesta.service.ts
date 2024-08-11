@@ -137,8 +137,6 @@ export class PropuestaService {
     //Busco el id de la solicitud
     const STG = await this.solicitudTrabajoGradoService.getByUser(userId);
 
-    console.log(STG);
-
     if (!STG || STG.length === 0) {
       throw CustomError.badRequest(
         `No existe una solicitud de trabajo de grado en el usuario`

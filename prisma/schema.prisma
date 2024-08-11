@@ -106,13 +106,12 @@ enum TipoPropuestaFile {
 //InformeFinal
 
 model InformeFinal {
-  id              String  @id @unique @default(uuid())
-  propuestaId     String  @unique
-  directorId      String  @unique
-  codirectorId    String? @unique
-  recomendaciones String  @db.LongText()
-  conclusiones    String  @db.LongText()
-  trabajoFuturo   String  @db.LongText()
+  id            String  @id @unique @default(uuid())
+  propuestaId   String  @unique
+  directorId    String
+  codirectorId  String?
+  conclusiones  String  @db.LongText()
+  trabajoFuturo String  @db.LongText()
 
   estado    EstadoInformeFinal @default(PENDIENTE)
   createdAt DateTime           @default(now())
@@ -129,16 +128,17 @@ model InformeFinal {
 enum EstadoInformeFinal {
   APROBADO
   PENDIENTE
+  CAMBIOS
   NO_APROBADO
 }
 
 model InformeFinalFile {
-  id             String            @id @unique @default(uuid())
-  fileId         String            @unique
+  id             String               @id @unique @default(uuid())
+  fileId         String               @unique
   informeFinalId String
-  tipo           TipoPropuestaFile
-  informeFinal   InformeFinal      @relation(fields: [informeFinalId], references: [id], onDelete: Cascade)
-  file           File              @relation(fields: [fileId], references: [id], onDelete: Cascade)
+  tipo           TipoInformeFinalFile
+  informeFinal   InformeFinal         @relation(fields: [informeFinalId], references: [id], onDelete: Cascade)
+  file           File                 @relation(fields: [fileId], references: [id], onDelete: Cascade)
 }
 
 enum TipoInformeFinalFile {
@@ -149,6 +149,7 @@ model Jurado {
   id             String @id @unique @default(uuid())
   informeFinalId String
   userId         String
+  comentario     String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

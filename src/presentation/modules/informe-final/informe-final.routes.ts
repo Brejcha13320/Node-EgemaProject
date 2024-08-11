@@ -32,6 +32,24 @@ export class InformeFinalRoutes {
 
     //* ESTUDIANTE
 
+    router.get(
+      "/estudiante",
+      [ValidRolMiddleware.validateRol(["ESTUDIANTE"])],
+      controller.getInformeFinal
+    );
+
+    router.get(
+      "/estudiante/:id",
+      [ValidRolMiddleware.validateRol(["ESTUDIANTE"])],
+      controller.getInformeFinalById
+    );
+
+    router.get(
+      "/estudiante/usuarios/director",
+      [ValidRolMiddleware.validateRol(["ESTUDIANTE"])],
+      controller.getUsuariosDirector
+    );
+
     router.post(
       "/estudiante",
       [

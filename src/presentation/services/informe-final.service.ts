@@ -11,7 +11,104 @@ export class InformeFinalService {
     private propuestaService: PropuestaService
   ) {}
 
-  public async create(data: CreateInformeFinalDTO): Promise<any> {
+  public async getByUser(userId: string) {
+    //Busco el id de la propuesta
+    const getPropuesta = await this.propuestaService.getByUser(userId);
+
+    if (!getPropuesta) {
+      //No existe una propuesta registrada por el usuario
+      return [];
+    }
+
+    const getInformeFinal = await prisma.informeFinal.findFirst({
+      where: {
+        propuestaId: getPropuesta[0].id,
+      },
+      include: {
+        propuesta: {
+          include: {
+            solicitudTrabajoGrado: {
+              include: {
+                estudiante: true,
+              },
+            },
+          },
+        },
+        director: true,
+        codirector: true,
+        jurados: {
+          include: {
+            user: true,
+          },
+        },
+        files: {
+          include: {
+            file: true,
+          },
+        },
+      },
+    });
+
+    if (getInformeFinal) {
+      return [getInformeFinal];
+    } else {
+      return [];
+    }
+  }
+
+  public async getById(id: string) {
+    const informeFinal = await prisma.informeFinal.findFirst({
+      where: {
+        id,
+      },
+      include: {
+        propuesta: {
+          include: {
+            solicitudTrabajoGrado: {
+              include: {
+                estudiante: true,
+              },
+            },
+          },
+        },
+        director: true,
+        codirector: true,
+        jurados: {
+          include: {
+            user: true,
+          },
+        },
+        files: {
+          include: {
+            file: true,
+          },
+        },
+      },
+    });
+
+    if (!informeFinal) {
+      throw CustomError.internalServer(`No existe un informe final con ese id`);
+    }
+
+    return informeFinal;
+  }
+
+  public async getUsersForPrincipal() {
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [{ rol: "DOCENTE" }],
+      },
+    });
+
+    const customUsers = users.map((user) => {
+      const { password, ...restUser } = user;
+      return restUser;
+    });
+
+    return customUsers;
+  }
+
+  public async create(data: CreateInformeFinalDTO) {
     const { userId, informeFinal, ...restData } = data;
 
     //Busco el id de la propuesta
@@ -33,18 +130,22 @@ export class InformeFinalService {
 
     try {
       // Subir archivos y crearlos
-      // const informeFinalFile = await this.fileService.uploadFileToBackBlaze({
-      //   file: informeFinal,
-      //   propuestaId: null,
-      //   informeFinalId: createInformeFinal.id,
-      // });
-      // //Actualiza el Informe Final
-      // const updateInformeFinal = await this.updateFilesInformeFinal(
-      //   createInformeFinal.id,
-      //   informeFinalFile.id ?? ""
-      // );
-      // return updateInformeFinal;
-      return {};
+      const informeFinalFile = await this.fileService.uploadFileToBackBlaze(
+        informeFinal
+      );
+
+      //Creo los Registros en PropuestaFiles
+      await prisma.informeFinalFile.createMany({
+        data: [
+          {
+            informeFinalId: createInformeFinal.id,
+            fileId: informeFinalFile.id,
+            tipo: "INFORME_FINAL",
+          },
+        ],
+      });
+
+      return await this.getById(createInformeFinal.id);
     } catch (error) {
       /**
        * Si algo sale mal en la subida de archivos a backblaze, base de datos o actualizando
@@ -62,6 +163,8 @@ export class InformeFinalService {
       },
     });
   }
+
+  // revisar
 
   private async updateFilesInformeFinal(
     id: string,
