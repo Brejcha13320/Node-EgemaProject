@@ -1,3 +1,4 @@
+import { Propuesta } from "./propuesta.interface";
 import { User } from "./user.interface";
 
 export interface InformeFinal {
@@ -9,8 +10,10 @@ export interface InformeFinal {
   trabajoFuturo: string;
   estado: EstadoInformeFinal;
   files: InformeFinalFile[];
+  propuesta: Propuesta;
   director: User;
   codirector: User;
+  jurados: Jurado[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,9 +26,27 @@ export interface InformeFinalFile {
   file: File;
 }
 
+export interface Jurado {
+  id: string;
+  userId: string;
+  informeFinalId: string;
+  comentario: String;
+  createdAt: Date;
+  updatedAt: Date;
+  user: User;
+}
+export interface CreateJurado {
+  userId: string;
+  informeFinalId: string;
+}
+
 // FIXME: no se que hace
 export interface FilesObjectInformeFinal {
   informeFinal: [Express.Multer.File];
+}
+
+export interface FileObjectInformeFinal {
+  file: [Express.Multer.File];
 }
 
 export type EstadoInformeFinal = "APROBADO" | "PENDIENTE" | "NO_APROBADO";

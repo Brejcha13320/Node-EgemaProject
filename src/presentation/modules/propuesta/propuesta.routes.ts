@@ -79,6 +79,15 @@ export class PropuestaRoutes {
       controller.updatePropuestaFile
     );
 
+    router.put(
+      "/estudiante/pendiente/:id",
+      [
+        ValidRolMiddleware.validateRol(["ESTUDIANTE"]),
+        PropuestaMiddleware.validateExistsPropuesta,
+      ],
+      controller.updateEstadoPendientePropuesta
+    );
+
     //* COMITE
 
     router.get(

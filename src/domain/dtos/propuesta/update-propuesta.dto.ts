@@ -1,6 +1,6 @@
 import { LineaInvestigacionPropuesta } from "../../interfaces/propuesta.interface";
 
-export class UpdatePropuestaEstudianteDTO {
+export class UpdatePropuestaDTO {
   private constructor(
     public readonly titulo: string,
     public readonly lineaInvestigacion: LineaInvestigacionPropuesta,
@@ -12,7 +12,7 @@ export class UpdatePropuestaEstudianteDTO {
 
   static create(object: {
     [key: string]: any;
-  }): [string?, UpdatePropuestaEstudianteDTO?] {
+  }): [string?, UpdatePropuestaDTO?] {
     const lineasInvestigacion: LineaInvestigacionPropuesta[] = [
       "TELEMATICA_REDES",
       "INGENIERIA_SOFTWARE",
@@ -57,7 +57,7 @@ export class UpdatePropuestaEstudianteDTO {
     //Crear DTO
     return [
       undefined,
-      new UpdatePropuestaEstudianteDTO(
+      new UpdatePropuestaDTO(
         titulo,
         lineaInvestigacion,
         problema,

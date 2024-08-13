@@ -60,7 +60,74 @@ export class InformeFinalRoutes {
       controller.createInformeFinal
     );
 
+    router.put(
+      "/estudiante/:id",
+      [
+        ValidRolMiddleware.validateRol(["ESTUDIANTE"]),
+        InformeFinalMiddleware.validateUpdateInformeFinal,
+      ],
+      controller.updateInformeFinal
+    );
+
+    router.put(
+      "/estudiante/file/:id",
+      [
+        ValidRolMiddleware.validateRol(["ESTUDIANTE"]),
+        InformeFinalMiddleware.validateUpdateInformeFinal,
+        multerMiddleware.fields([{ name: "file", maxCount: 1 }]),
+      ],
+      controller.updateInformeFinalFile
+    );
+
+    router.put(
+      "/estudiante/pendiente/:id",
+      [
+        ValidRolMiddleware.validateRol(["ESTUDIANTE"]),
+        InformeFinalMiddleware.validateUpdateInformeFinal,
+      ],
+      controller.updateEstadoPendienteInformeFinal
+    );
+
     //* COMITE
+
+    router.get(
+      "/comite",
+      [ValidRolMiddleware.validateRol(["COMITE"])],
+      controller.getInformesFinales
+    );
+
+    router.get(
+      "/comite/:id",
+      [ValidRolMiddleware.validateRol(["COMITE"])],
+      controller.getInformeFinalById
+    );
+
+    router.get(
+      "/comite/jurado/:id",
+      [ValidRolMiddleware.validateRol(["COMITE"])],
+      controller.getJuradosByInformeFinalId
+    );
+
+    router.get(
+      "/comite/usuarios/jurado",
+      [ValidRolMiddleware.validateRol(["COMITE"])],
+      controller.getUsuariosJurado
+    );
+
+    router.post(
+      "/comite/jurado",
+      [
+        ValidRolMiddleware.validateRol(["COMITE"]),
+        InformeFinalMiddleware.createJuradosInformeFinal,
+      ],
+      controller.createJurados
+    );
+
+    router.put(
+      "/comite/estado/:id",
+      [ValidRolMiddleware.validateRol(["COMITE"])],
+      controller.updateEstadoInformeFinal
+    );
 
     return router;
   }

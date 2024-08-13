@@ -1,7 +1,7 @@
 import { FileService } from "../../../presentation/services/file.service";
 import { FileObjectPropuesta } from "../../interfaces/propuesta.interface";
 
-export class UpdatePropuestaFileEstudianteDTO {
+export class UpdatePropuestaFileDTO {
   private constructor(
     public readonly propuestaFileId: string,
     public readonly file: Express.Multer.File
@@ -10,7 +10,7 @@ export class UpdatePropuestaFileEstudianteDTO {
   static create(
     object: { [key: string]: any },
     files: any
-  ): [string?, UpdatePropuestaFileEstudianteDTO?] {
+  ): [string?, UpdatePropuestaFileDTO?] {
     //Validaciones de Todos los campos que no son Files
     const { propuestaFileId } = object;
 
@@ -41,9 +41,6 @@ export class UpdatePropuestaFileEstudianteDTO {
     }
 
     //Crear DTO
-    return [
-      undefined,
-      new UpdatePropuestaFileEstudianteDTO(propuestaFileId, file[0]),
-    ];
+    return [undefined, new UpdatePropuestaFileDTO(propuestaFileId, file[0])];
   }
 }

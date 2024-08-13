@@ -2,8 +2,9 @@ import { Request, Response } from "express";
 import { HandleError, UpdateEstadoPropuestaDTO } from "../../../domain";
 import { PropuestaService } from "../../services/propuesta.service";
 import { CreatePropuestaDTO } from "../../../domain/dtos/propuesta/create-propuesta.dto";
-import { UpdatePropuestaEstudianteDTO } from "../../../domain/dtos/propuesta/update-propuesta-estudiante.dto";
-import { UpdatePropuestaFileEstudianteDTO } from "../../../domain/dtos/propuesta/update-propuesta-file-estudiante.dto";
+import { UpdatePropuestaDTO } from "../../../domain/dtos/propuesta/update-propuesta.dto";
+import { UpdatePropuestaFileDTO } from "../../../domain/dtos/propuesta/update-propuesta-file.dto";
+import { UpdateEstadoPendientePropuestaDTO } from "../../../domain/dtos/propuesta/update-estado-pendiente-propuesta.dto";
 
 export class PropuestaController {
   constructor(private propuestaService: PropuestaService) {}
@@ -55,12 +56,11 @@ export class PropuestaController {
   updatePropuesta = (req: Request, res: Response) => {
     const { id } = req.params;
 
-    const [error, updatePropuestaEstudianteDTO] =
-      UpdatePropuestaEstudianteDTO.create(req.body);
+    const [error, updatePropuestaDTO] = UpdatePropuestaDTO.create(req.body);
     if (error) return res.status(400).json({ error });
 
     this.propuestaService
-      .update(id, updatePropuestaEstudianteDTO!)
+      .update(id, updatePropuestaDTO!)
       .then((propuesta) => res.status(201).json(propuesta))
       .catch((error) => HandleError.error(error, res));
   };
@@ -68,13 +68,28 @@ export class PropuestaController {
   updatePropuestaFile = (req: Request, res: Response) => {
     const { id } = req.params;
 
-    const [error, updatePropuestaFileEstudianteDTO] =
-      UpdatePropuestaFileEstudianteDTO.create(req.body, req.files);
+    const [error, updatePropuestaFileDTO] = UpdatePropuestaFileDTO.create(
+      req.body,
+      req.files
+    );
 
     if (error) return res.status(400).json({ error });
 
     this.propuestaService
-      .updatePropuestaFile(id, updatePropuestaFileEstudianteDTO!)
+      .updatePropuestaFile(id, updatePropuestaFileDTO!)
+      .then((propuesta) => res.status(201).json(propuesta))
+      .catch((error) => HandleError.error(error, res));
+  };
+
+  updateEstadoPendientePropuesta = (req: Request, res: Response) => {
+    const { id } = req.params;
+    const [error, updateEstadoPendientePropuestaDTO] =
+      UpdateEstadoPendientePropuestaDTO.create(req.body);
+
+    if (error) return res.status(400).json({ error });
+
+    this.propuestaService
+      .updateEstado(id, updateEstadoPendientePropuestaDTO!)
       .then((propuesta) => res.status(201).json(propuesta))
       .catch((error) => HandleError.error(error, res));
   };

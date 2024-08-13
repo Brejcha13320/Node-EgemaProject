@@ -3,8 +3,8 @@ import { CustomError, EstadoPropuesta, Propuesta } from "../../domain";
 import { CreatePropuestaDTO } from "../../domain/dtos/propuesta/create-propuesta.dto";
 import { FileService } from "./file.service";
 import { SolicitudTrabajoGradoService } from "./solicitud-trabajo-grado.service";
-import { UpdatePropuestaEstudianteDTO } from "../../domain/dtos/propuesta/update-propuesta-estudiante.dto";
-import { UpdatePropuestaFileEstudianteDTO } from "../../domain/dtos/propuesta/update-propuesta-file-estudiante.dto";
+import { UpdatePropuestaDTO } from "../../domain/dtos/propuesta/update-propuesta.dto";
+import { UpdatePropuestaFileDTO } from "../../domain/dtos/propuesta/update-propuesta-file.dto";
 
 export class PropuestaService {
   constructor(
@@ -222,7 +222,7 @@ export class PropuestaService {
 
   public async update(
     id: string,
-    data: UpdatePropuestaEstudianteDTO
+    data: UpdatePropuestaDTO
   ): Promise<Propuesta> {
     const propuesta = await prisma.propuesta.update({
       where: {
@@ -248,7 +248,7 @@ export class PropuestaService {
 
   public async updatePropuestaFile(
     id: string,
-    data: UpdatePropuestaFileEstudianteDTO
+    data: UpdatePropuestaFileDTO
   ): Promise<Propuesta | any> {
     //Obtener el propuestaFile
     const propuestFile = await prisma.propuestaFile.findFirst({

@@ -149,13 +149,13 @@ model Jurado {
   id             String @id @unique @default(uuid())
   informeFinalId String
   userId         String
-  comentario     String
+  comentario     String @default("")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  informeFinal InformeFinal @relation(fields: [informeFinalId], references: [id])
-  user         User         @relation("jurado", fields: [userId], references: [id])
+  informeFinal InformeFinal @relation(fields: [informeFinalId], references: [id], onDelete: Cascade)
+  user         User         @relation("jurado", fields: [userId], references: [id], onDelete: Cascade)
 }
 
 //Reunion

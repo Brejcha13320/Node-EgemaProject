@@ -1,15 +1,46 @@
-import { CustomError, InformeFinal } from "../../domain";
+import { CreateJurado, CustomError, InformeFinal } from "../../domain";
 import { CreateInformeFinalDTO } from "../../domain/dtos/informe-final/create-informe-final.dto";
 import { FileService } from "./file.service";
-import { SolicitudTrabajoGradoService } from "./solicitud-trabajo-grado.service";
 import { PropuestaService } from "./propuesta.service";
 import { prisma } from "../../database";
+import { UpdateEstadoInformeFinalDTO } from "../../domain/dtos/informe-final/update-estado-informe-final.dto";
+import { UpdateInformeFinalDTO } from "../../domain/dtos/informe-final/update-informe-final.dto";
+import { UpdateInformeFinalFileDTO } from "../../domain/dtos/informe-final/update-informe-final-file.dto";
 
 export class InformeFinalService {
   constructor(
     private fileService: FileService,
     private propuestaService: PropuestaService
   ) {}
+
+  public async getAll() {
+    const informesFinales = await prisma.informeFinal.findMany({
+      include: {
+        propuesta: {
+          include: {
+            solicitudTrabajoGrado: {
+              include: {
+                estudiante: true,
+              },
+            },
+          },
+        },
+        director: true,
+        codirector: true,
+        jurados: {
+          include: {
+            user: true,
+          },
+        },
+        files: {
+          include: {
+            file: true,
+          },
+        },
+      },
+    });
+    return informesFinales;
+  }
 
   public async getByUser(userId: string) {
     //Busco el id de la propuesta
@@ -93,10 +124,63 @@ export class InformeFinalService {
     return informeFinal;
   }
 
+  public async update(id: string, data: UpdateInformeFinalDTO) {
+    const informeFinal = await prisma.informeFinal.update({
+      where: {
+        id,
+      },
+      data,
+      include: {
+        propuesta: {
+          include: {
+            solicitudTrabajoGrado: {
+              include: {
+                estudiante: true,
+              },
+            },
+          },
+        },
+        director: true,
+        codirector: true,
+        jurados: {
+          include: {
+            user: true,
+          },
+        },
+        files: {
+          include: {
+            file: true,
+          },
+        },
+      },
+    });
+
+    if (!informeFinal) {
+      throw CustomError.internalServer(`No existe un informe final con ese id`);
+    }
+
+    return informeFinal;
+  }
+
   public async getUsersForPrincipal() {
     const users = await prisma.user.findMany({
       where: {
-        OR: [{ rol: "DOCENTE" }],
+        OR: [{ rol: "DOCENTE" }, { rol: "COMITE" }],
+      },
+    });
+
+    const customUsers = users.map((user) => {
+      const { password, ...restUser } = user;
+      return restUser;
+    });
+
+    return customUsers;
+  }
+
+  public async getUsersForJurado() {
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [{ rol: "DOCENTE" }, { rol: "COMITE" }],
       },
     });
 
@@ -164,26 +248,79 @@ export class InformeFinalService {
     });
   }
 
-  // revisar
-
-  private async updateFilesInformeFinal(
-    id: string,
-    informeFinal: string
-  ): Promise<InformeFinal> {
-    const informeFinalUpdate = await prisma.informeFinal.update({
+  public async getJuradosByInformeFinalId(informeFinalId: string) {
+    const jurados = await prisma.jurado.findMany({
       where: {
-        id,
-      },
-      data: {
-        // informeFinal,
+        informeFinalId,
       },
       include: {
-        files: true,
+        user: true,
+      },
+    });
+    return jurados;
+  }
+
+  public async createJuradosInformeFinal(
+    informeFinalId: string,
+    data: CreateJurado[]
+  ) {
+    //Eliminar Jurados Existentes
+    await this.deleteJuradosFromInformeFinal(informeFinalId);
+
+    await prisma.jurado.createMany({
+      data,
+    });
+
+    return this.getJuradosByInformeFinalId(informeFinalId);
+  }
+
+  public async deleteJuradosFromInformeFinal(informeFinalId: string) {
+    return await prisma.jurado.deleteMany({
+      where: {
+        informeFinalId,
+      },
+    });
+  }
+
+  public async updateEstadoInformeFinal(
+    informeFinalId: string,
+    data: UpdateEstadoInformeFinalDTO
+  ) {
+    return await prisma.informeFinal.update({
+      where: {
+        id: informeFinalId,
+      },
+      data,
+    });
+  }
+
+  public async updateInformeFinalFile(
+    id: string,
+    data: UpdateInformeFinalFileDTO
+  ): Promise<InformeFinal | any> {
+    //Obtener el propuestaFile
+    const informeFinalFile = await prisma.informeFinalFile.findFirst({
+      where: {
+        id: data.informeFinalFileId,
       },
     });
 
-    console.log(informeFinalUpdate);
+    if (!informeFinalFile) {
+      throw CustomError.badRequest(
+        `No existe un archivo en el informe final con el id ${data.informeFinalFileId}`
+      );
+    }
 
-    return informeFinalUpdate as any;
+    try {
+      // Subir archivos y crearlos
+      await this.fileService.updateFileToBackBlaze(
+        informeFinalFile.fileId,
+        data.file
+      );
+
+      return await this.getById(id);
+    } catch (error) {
+      throw CustomError.internalServer(`${error}`);
+    }
   }
 }
