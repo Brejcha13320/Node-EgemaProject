@@ -7,6 +7,7 @@ import { UpdateEstadoInformeFinalDTO } from "../../../domain/dtos/informe-final/
 import { UpdateInformeFinalDTO } from "../../../domain/dtos/informe-final/update-informe-final.dto";
 import { UpdateInformeFinalFileDTO } from "../../../domain/dtos/informe-final/update-informe-final-file.dto";
 import { UpdateEstadoPendienteInformeFinalDTO } from "../../../domain/dtos/informe-final/update-estado-pendiente-informe-final.dto";
+import { UpdateComentarioJuradoDTO } from "../../../domain/dtos/informe-final/update-comentario-jurado.dto";
 
 export class InformeFinalController {
   constructor(private informeFinalService: InformeFinalService) {}
@@ -135,6 +136,40 @@ export class InformeFinalController {
 
     this.informeFinalService
       .updateEstadoInformeFinal(id, updateEstadoInformeFinalDTO!)
+      .then((users) => res.status(201).json(users))
+      .catch((error) => HandleError.error(error, res));
+  };
+
+  //* JURADO
+
+  getJuradoInformesFinales = (req: Request, res: Response) => {
+    const userId = req.body.user.id;
+
+    this.informeFinalService
+      .getJuradoInformesFinales(userId)
+      .then((users) => res.status(201).json(users))
+      .catch((error) => HandleError.error(error, res));
+  };
+
+  getJuradoById = (req: Request, res: Response) => {
+    const id = req.params.id;
+
+    this.informeFinalService
+      .getJuradoById(id)
+      .then((users) => res.status(201).json(users))
+      .catch((error) => HandleError.error(error, res));
+  };
+
+  updateComentarioJurado = (req: Request, res: Response) => {
+    const id = req.params.id;
+
+    const [error, updateComentarioJuradoDTO] = UpdateComentarioJuradoDTO.create(
+      req.body
+    );
+    if (error) return res.status(400).json({ error });
+
+    this.informeFinalService
+      .updateComentarioJurado(id, updateComentarioJuradoDTO!)
       .then((users) => res.status(201).json(users))
       .catch((error) => HandleError.error(error, res));
   };

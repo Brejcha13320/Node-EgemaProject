@@ -6,6 +6,7 @@ import { prisma } from "../../database";
 import { UpdateEstadoInformeFinalDTO } from "../../domain/dtos/informe-final/update-estado-informe-final.dto";
 import { UpdateInformeFinalDTO } from "../../domain/dtos/informe-final/update-informe-final.dto";
 import { UpdateInformeFinalFileDTO } from "../../domain/dtos/informe-final/update-informe-final-file.dto";
+import { UpdateComentarioJuradoDTO } from "../../domain/dtos/informe-final/update-comentario-jurado.dto";
 
 export class InformeFinalService {
   constructor(
@@ -322,5 +323,60 @@ export class InformeFinalService {
     } catch (error) {
       throw CustomError.internalServer(`${error}`);
     }
+  }
+
+  public async getJuradoInformesFinales(userId: string) {
+    return await prisma.jurado.findMany({
+      where: {
+        userId,
+      },
+      include: {
+        informeFinal: {
+          include: {
+            propuesta: {
+              include: {
+                solicitudTrabajoGrado: {
+                  include: {
+                    estudiante: true,
+                  },
+                },
+              },
+            },
+            director: true,
+            codirector: true,
+            jurados: {
+              include: {
+                user: true,
+              },
+            },
+            files: {
+              include: {
+                file: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  public async getJuradoById(id: string) {
+    return await prisma.jurado.findFirst({
+      where: {
+        id,
+      },
+    });
+  }
+
+  public async updateComentarioJurado(
+    id: string,
+    data: UpdateComentarioJuradoDTO
+  ) {
+    return await prisma.jurado.update({
+      where: {
+        id,
+      },
+      data,
+    });
   }
 }

@@ -129,6 +129,31 @@ export class InformeFinalRoutes {
       controller.updateEstadoInformeFinal
     );
 
+    //* JURADO
+    router.get(
+      "/jurado/informes-finales",
+      [ValidRolMiddleware.validateRol(["COMITE", "DOCENTE"])],
+      controller.getJuradoInformesFinales
+    );
+
+    router.get(
+      "/jurado/:id",
+      [ValidRolMiddleware.validateRol(["COMITE", "DOCENTE"])],
+      controller.getJuradoById
+    );
+
+    router.post(
+      "/jurado/:id",
+      [ValidRolMiddleware.validateRol(["COMITE", "DOCENTE"])],
+      controller.updateComentarioJurado
+    );
+
+    router.get(
+      "/jurado/informe-final/:id",
+      [ValidRolMiddleware.validateRol(["COMITE", "DOCENTE"])],
+      controller.getInformeFinalById
+    );
+
     return router;
   }
 }
